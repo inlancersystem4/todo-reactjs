@@ -1,0 +1,100 @@
+.todos{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin:100px auto;
+}
+
+form{
+    display: flex;
+    /* flex-direction: column;s */
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    width: 50%;
+    height: 300px;
+    /* background-color: aquamarine; */
+    border-radius: 10px;
+    box-shadow: 0 0 10px 3px rgb(245, 245, 245);
+}
+.add{
+    text-align: center;
+    width: 100%;
+    margin-top: 10px;
+}
+input{
+
+    padding: 6px;
+    width: 80%;
+    border-radius: 7px;
+    border: 1px solid gray;
+    /* outline: none; */
+}
+form button{
+    width: 20%;
+    margin: 10px;
+    padding: 5px;
+    border: none;
+    outline: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.2s ease-in-out;
+    background-color: rgb(252, 245, 245);
+}
+form button:hover{
+    border: 1px solid black;
+    background-color: bisque;
+}
+.table{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 50px auto;
+    width: 100%;
+}
+table{
+    border-collapse: collapse;
+    /* background-color: aqua;s */
+}
+th{
+    border-right: 1px solid black;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+td{
+    border-right: 1px solid black;
+    padding: 10px;
+    word-wrap: break-word;
+}
+.btn{
+    margin: 10px;
+    padding: 5px;
+    border: none;
+    outline: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.2s ease-in-out;
+    background-color: rgb(252, 245, 245);
+}
+.btn-e{
+    margin: 2px;
+    background-color: rgb(144, 248, 144);
+    color: white;
+    font-weight: bold;
+}
+.btn-d{
+    margin: 2px;    
+    background-color: rgb(243, 151, 151);
+    color: white;
+    font-weight: bold;
+}
+.btn-e:hover{
+    background-color: rgb(130, 248, 130);
+    color: black;
+}
+.btn-d:hover{
+    background-color: rgb(245, 129, 129);
+    color: black;
+}

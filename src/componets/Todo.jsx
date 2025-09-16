@@ -1,6 +1,7 @@
-import React,{useState} from 'react'
+import React,{useEffect, useState} from 'react'
 import TodoImg from "../assets/todo.gif"
-
+import { io } from "socket.io-client"
+let socket =   io("http://127.0.0.1:3001");
 const Todo = () => {
     const [todos,setTodos] = useState({
       id: "",
@@ -9,6 +10,7 @@ const Todo = () => {
     })
     const [data,setData] = useState([]) 
     const [searchData,setSerchData] = useState(null)
+    const [del,setDel] = useState(false)
 const [edit,setEdit] = useState(false)
 const [loading,setLoading] = useState(false)
     const handleChange = (e)=>{
@@ -40,6 +42,7 @@ const [loading,setLoading] = useState(false)
        setEdit(true)
     }
     const handleDelete = (e)=>{
+      setDel(true)
         setData(pre=>pre.filter(d=>d.name != e.name))
     }
     const UpdateData = (e)=>{
@@ -57,11 +60,26 @@ const [loading,setLoading] = useState(false)
             })
        setLoading(false)  
     }
-  const filterData = loading===false && data!=""? data.filter((e)=>{
-        const matchData = e.name.toLowerCase().includes(searchData)
-        return matchData;
-  }):[]
-    console.log("data",filterData)
+  // const filterData = loading===false && data!=""? data.filter((e)=>{
+  //       const matchData = e.name.toLowerCase().includes(searchData)
+  //       return matchData;
+  // }):[]
+  //   console.log("data",filterData)
+const JoinRoom = ()=>{
+  if(searchData){
+    socket.emit("join_room",searchData)
+  }
+}
+useEffect(()=>{
+  console.log("data...!!",data)
+    socket.emit("message",{room_id:searchData,data})
+    if(data !="" || del){
+      socket.emit("read_by",data)
+    }
+   loading===false && socket.on("read_by",(newdata)=>{
+      setData(newdata)
+    }) 
+},[todos,loading,del])
   return (
     <div className='todos'>
         <form action="" onSubmit={edit ? UpdateData : handleSubmit}>
@@ -83,7 +101,8 @@ const [loading,setLoading] = useState(false)
       </form>
 <div className='table' style={{flexDirection:"column", gap:"20px"}}>
   <div style={{width:"30%"}}>
-    {/* <input type="text" onChange={(e)=>setSerchData(e.target.value)}  style={{width:"100%"}} placeholder='Search Name....' /> */}
+    <input type="text" onChange={(e)=>setSerchData(e.target.value)}  style={{width:"100%"}} placeholder='Enter Room Id....' />
+     <button onClick={JoinRoom}>Join</button>
   </div>
   <table>
     <thead>

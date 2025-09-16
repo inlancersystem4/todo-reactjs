@@ -1,7 +1,7 @@
 import React,{useEffect, useState} from 'react'
 import TodoImg from "../assets/todo.gif"
 import { io } from "socket.io-client"
-let socket =   io("http://127.0.0.1:3001");
+let socket =   io("http://192.168.0.167:3001");
 const Todo = () => {
     const [todos,setTodos] = useState({
       id: "",
@@ -9,7 +9,9 @@ const Todo = () => {
         message:""
     })
     const [data,setData] = useState([]) 
-    const [searchData,setSerchData] = useState(null)
+    const [user,setUser] = useState(null)
+    const [searchData,setSerchData] = useState("room1")
+    const [chat,setChat] = useState({d:false,id:null})
     const [del,setDel] = useState(false)
 const [edit,setEdit] = useState(false)
 const [loading,setLoading] = useState(false)
@@ -38,6 +40,9 @@ const [loading,setLoading] = useState(false)
 
     const handleEdit = (e)=>{
        const editData = data.find(d=>d.id===e.id);
+      //  if(e.id===chat.id){
+      //     alert("Usert is Editing....")
+      //  }
        setTodos({id:editData.id,name:editData.name,message:editData.message});
        setEdit(true)
     }
@@ -53,6 +58,7 @@ const [loading,setLoading] = useState(false)
         
     }))
     setEdit(false)
+    setChat({d:false,id:null})
             alert("Data Successfully Updated!")
             setTodos({
                name:"",
@@ -65,14 +71,27 @@ const [loading,setLoading] = useState(false)
   //       return matchData;
   // }):[]
   //   console.log("data",filterData)
-const JoinRoom = ()=>{
   if(searchData){
     socket.emit("join_room",searchData)
+  //  setUser(s.id)
   }
-}
+
 useEffect(()=>{
   console.log("data...!!",data)
     socket.emit("message",{room_id:searchData,data})
+    if(edit){
+      socket.emit("editing",todos)
+      socket.on("editing",(d)=>{
+       const s = socket.emit("getUser")
+        socket.on("getUser",(userId)=>{
+          if(userId !== s.id){
+            console.log("user........editing",d)
+            alert("User is Editing...",d)
+          }
+        })
+         
+      })
+    }
     if(data !="" || del){
       socket.emit("read_by",data)
     }
@@ -96,13 +115,21 @@ useEffect(()=>{
       </div>
       <div className='add'>
        <button className='btn' type='submit'>{!edit?"Add":"Edit"}</button>
+       <button className='btn' type='button' onClick={()=>{
+        setDel(false)
+        setEdit(false)
+        setTodos({
+        id: "",
+        name:"",
+        message:""
+       })}}>Cancel</button>
       </div>
       </div>
       </form>
 <div className='table' style={{flexDirection:"column", gap:"20px"}}>
   <div style={{width:"30%"}}>
-    <input type="text" onChange={(e)=>setSerchData(e.target.value)}  style={{width:"100%"}} placeholder='Enter Room Id....' />
-     <button onClick={JoinRoom}>Join</button>
+    {/* <input type="text" onChange={(e)=>setSerchData(e.target.value)}  style={{width:"100%"}} placeholder='Enter Room Id....' />
+     <button onClick={JoinRoom}>Join</button> */}
   </div>
   <table>
     <thead>
@@ -118,9 +145,9 @@ useEffect(()=>{
 return <tr key={i}>
         <td>{e.name}</td>
         <td>{e.message}</td>
-        <td><button className='btn btn-e' onClick={()=>{
+        <td><button className='btn btn-e' style={{background:chat.id===e.id&&"gray"}} disabled={chat.id===e.id} onClick={()=>{
             handleEdit(e)
-            }}>Edit</button><button className='btn btn-d' onClick={
+            }}>Edit</button><button className='btn btn-d'  onClick={
                ()=> handleDelete(e)
             }>Delete</button></td>
         </tr>

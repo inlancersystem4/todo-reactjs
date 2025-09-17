@@ -4,7 +4,7 @@ import { io } from "socket.io-client"
 let socket =   io("http://192.168.0.167:3001");
 const Todo = () => {
     const [todos,setTodos] = useState({
-      id: "",
+      id:new Date(),
         name:"",
         message:""
     })
@@ -22,13 +22,17 @@ const [loading,setLoading] = useState(false)
         e.preventDefault()
         setLoading(true)
         if(todos.name != "" || todos.message != ""){
-         setData([...data,{id:new Date(),name:todos.name,message:todos.message}])
+          let getTodos = JSON.parse(localStorage.getItem("todos")) || []
+          getTodos.push(todos)
+          localStorage.setItem("todos",JSON.stringify(getTodos))
+          setData(getTodos)
             setEdit(false)
             alert("Data Successfully Entered!")
             setTodos({
                name:"",
                message:"" 
             })
+            setLoading(false)
         }
         else{
 
@@ -39,24 +43,35 @@ const [loading,setLoading] = useState(false)
     }
 
     const handleEdit = (e)=>{
-       const editData = data.find(d=>d.id===e.id);
+      const getTodos = JSON.parse(localStorage.getItem("todos"))
+       const editData = getTodos.find(d=>d.id===e.id);
       //  if(e.id===chat.id){
       //     alert("Usert is Editing....")
       //  }
+      
+      
+      setEdit(true)
        setTodos({id:editData.id,name:editData.name,message:editData.message});
-       setEdit(true)
     }
     const handleDelete = (e)=>{
       setDel(true)
-        setData(pre=>pre.filter(d=>d.name != e.name))
+      let localDel = JSON.parse(localStorage.getItem("todos")) || [];
+      // let localDelEdit  = localDel.filter()
+        setData(pre=>pre.filter(d=>d.id != e.id))
+        // localStorage.setItem("todos",JSON.stringify(data))
+        //   console.log("localdel",localDel)
+        // setDel(false)
     }
     const UpdateData = (e)=>{
         e.preventDefault()
+        let editLocal = JSON.parse(localStorage.getItem("todos"))
         setLoading(true)
-         setData(pre=>pre.map((e)=>{
-         return e.id === todos.id ? {...e,name:todos.name,message:todos.message} : e
-        
-    }))
+       let localData =  editLocal.map((e)=>{
+             return e.id === todos.id? {...e,name:todos.name,message:todos.message}: e
+        })
+        localStorage.setItem("todos",JSON.stringify(localData))
+         setData(localData)
+
     setEdit(false)
     setChat({d:false,id:null})
             alert("Data Successfully Updated!")
@@ -65,40 +80,74 @@ const [loading,setLoading] = useState(false)
         message:"" 
             })
        setLoading(false)  
+
     }
-  // const filterData = loading===false && data!=""? data.filter((e)=>{
-  //       const matchData = e.name.toLowerCase().includes(searchData)
-  //       return matchData;
-  // }):[]
-  //   console.log("data",filterData)
   if(searchData){
     socket.emit("join_room",searchData)
-  //  setUser(s.id)
+    socket.emit("createUser")
   }
 
+  
 useEffect(()=>{
   console.log("data...!!",data)
-    socket.emit("message",{room_id:searchData,data})
-    if(edit){
-      socket.emit("editing",todos)
-      socket.on("editing",(d)=>{
-       const s = socket.emit("getUser")
-        socket.on("getUser",(userId)=>{
-          if(userId !== s.id){
-            console.log("user........editing",d)
-            alert("User is Editing...",d)
-          }
-        })
-         
-      })
-    }
+  // localStorage.setItem("todos",JSON.stringify(data))
+   socket.emit("message",{room_id:searchData,data})
+    let s = socket.emit("getUser",socket.id)
+if(edit){
+  console.log('editing......',s)
+  console.log("socker id for edit ",s.id);
+  socket.emit("editing",todos, s.id);
+}
+socket.on("userBlock",(data)=>{
+  console.log("Receiving something here",data,s.id);
+  // userBLOCKING - 
+  // let editId = data.editing_user;
+  // // if(!edit){
+  // //   editId = null
+  // // }
+  if ((s.id != data.editing_user ) ) {
+    alert("Sorry you cant edit this");
+  }
+  
+})
     if(data !="" || del){
       socket.emit("read_by",data)
+      socket.on("ready_by",(data)=>{
+        // setData(data)
+        localStorage.setItem("todos",data)
+      })
     }
    loading===false && socket.on("read_by",(newdata)=>{
       setData(newdata)
-    }) 
+    })
 },[todos,loading,del])
+let getTodos;
+if(localStorage.getItem("todos")){getTodos = JSON.parse(localStorage.getItem("todos") || "[]");
+}
+
+// socket.emit("message",{room_id:searchData,data})
+useEffect(()=>{
+setData(getTodos || [])
+socket.on("read_by",(data)=>{
+  setData(data)
+})
+},[])
+useEffect(()=>{
+  if(del===true){
+    console.log("del",data)
+    localStorage.setItem("todos",JSON.stringify(data))
+  }
+},[del])
+useEffect(()=>{
+if(localStorage.getItem("todos")){
+  socket.emit("read_by",JSON.parse(localStorage.getItem("todos")))
+}
+if(!localStorage.getItem("todos")){
+  socket.on("read_by",(data)=>{
+    localStorage.setItem("todos",JSON.stringify(data))
+  })
+}
+},[])
   return (
     <div className='todos'>
         <form action="" onSubmit={edit ? UpdateData : handleSubmit}>
@@ -140,7 +189,7 @@ useEffect(()=>{
     </tr>
     </thead>
     {
-       data != "" && loading===false?<>{
+       data != [] && loading===false?<>{
         data.map((e,i)=>{
 return <tr key={i}>
         <td>{e.name}</td>
